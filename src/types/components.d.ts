@@ -11,6 +11,5 @@ declare module 'vue' {
     Card: typeof import('./../components/card.vue')['default']
     Icon: typeof import('@iconify/vue')['Icon']
     Settings: typeof import('./../components/settings.vue')['default']
-    Welcome: typeof import('./../components/welcome.vue')['default']
   }
 }

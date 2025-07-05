@@ -1,6 +1,6 @@
 <script lang="ts" setup name="App">
 import Card from '@/components/card.vue'
-import Settings from '@/components/Settings.vue'
+import Settings from '@/components/settings.vue'
 import { basicCannon, schoolPride } from '@/lib/utils'
 import { useGame } from '@/hooks/use-game'
 import { useGameStore } from '@/store/modules/game'
