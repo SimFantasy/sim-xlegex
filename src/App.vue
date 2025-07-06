@@ -222,14 +222,14 @@ onMounted(() => {
   }
 
   .game-container {
-    @apply flex-1 flex-center size-full;
+    @apply flex-1 flex-center flex-col size-full;
 
     .game-board {
       @apply relative mx-auto size-full;
     }
 
     .game-title {
-      @apply flex-center w-full text-4xl font-semibold text-primary;
+      @apply flex-center w-full text-center text-4xl font-semibold text-primary;
     }
   }
 

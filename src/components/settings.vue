@@ -1,3 +1,50 @@
+<script lang="ts" setup name="Settings">
+import { ref, onMounted } from 'vue'
+import { useGameStore, type GameConfig } from '@/store/modules/game'
+
+const emit = defineEmits(['close'])
+const gameStore = useGameStore()
+
+// 本地配置副本
+const localConfig = ref<GameConfig>({ ...gameStore.config })
+const localLevelConfig = ref([...gameStore.levelConfig])
+
+const closeSettings = () => {
+  emit('close')
+}
+
+const saveSettings = () => {
+  gameStore.updateConfig(localConfig.value)
+  gameStore.updateLevelConfig(localLevelConfig.value)
+  closeSettings()
+}
+
+const resetSettings = () => {
+  gameStore.resetConfig()
+  localConfig.value = { ...gameStore.config }
+  localLevelConfig.value = [...gameStore.levelConfig]
+}
+
+const addLevelConfig = () => {
+  localLevelConfig.value.push({
+    cardNum: 20,
+    layerNum: 8,
+    trap: true
+  })
+}
+
+const removeLevelConfig = (index: number) => {
+  if (localLevelConfig.value.length > 1) {
+    localLevelConfig.value.splice(index, 1)
+  }
+}
+
+onMounted(() => {
+  localConfig.value = { ...gameStore.config }
+  localLevelConfig.value = [...gameStore.levelConfig]
+})
+</script>
+
 <template>
   <div class="settings-overlay" @click="closeSettings">
     <div class="settings-modal" @click.stop>
@@ -81,9 +128,19 @@
 
           <div class="level-list">
             <div v-for="(level, index) in localLevelConfig" :key="index" class="level-item">
-              <span class="level-title">第{{ index + 1 }}关</span>
+              <div class="level-header">
+                <span class="level-title">第{{ index + 1 }}关</span>
+                <button
+                  class="remove-level-btn"
+                  @click="removeLevelConfig(index)"
+                  :disabled="localLevelConfig.length <= 1"
+                >
+                  <Icon icon="tabler:trash" />
+                </button>
+              </div>
               <div class="level-controls">
-                <label>卡牌种类：</label>
+                <label>种类：</label>
+
                 <input
                   v-model.number="level.cardNum"
                   type="number"
@@ -101,13 +158,6 @@
                 />
                 <label>陷阱：</label>
                 <input v-model="level.trap" type="checkbox" class="level-checkbox" />
-                <button
-                  class="remove-level-btn"
-                  @click="removeLevelConfig(index)"
-                  :disabled="localLevelConfig.length <= 1"
-                >
-                  <Icon icon="tabler:trash" />
-                </button>
               </div>
             </div>
           </div>
@@ -120,65 +170,22 @@
       </div>
 
       <div class="settings-footer">
+        <button class="btn btn-outline" @click="closeSettings">
+          <Icon icon="tabler:cancel" />
+          取消
+        </button>
         <button class="btn btn-secondary" @click="resetSettings">
           <Icon icon="tabler:refresh" />
-          重置默认
+          重置
         </button>
         <button class="btn btn-primary" @click="saveSettings">
           <Icon icon="tabler:device-floppy" />
-          保存设置
+          保存
         </button>
       </div>
     </div>
   </div>
 </template>
-
-<script lang="ts" setup>
-import { ref, onMounted } from 'vue'
-import { useGameStore, type GameConfig } from '@/store/modules/game'
-
-const emit = defineEmits(['close'])
-const gameStore = useGameStore()
-
-// 本地配置副本
-const localConfig = ref<GameConfig>({ ...gameStore.config })
-const localLevelConfig = ref([...gameStore.levelConfig])
-
-const closeSettings = () => {
-  emit('close')
-}
-
-const saveSettings = () => {
-  gameStore.updateConfig(localConfig.value)
-  gameStore.updateLevelConfig(localLevelConfig.value)
-  closeSettings()
-}
-
-const resetSettings = () => {
-  gameStore.resetConfig()
-  localConfig.value = { ...gameStore.config }
-  localLevelConfig.value = [...gameStore.levelConfig]
-}
-
-const addLevelConfig = () => {
-  localLevelConfig.value.push({
-    cardNum: 20,
-    layerNum: 8,
-    trap: true
-  })
-}
-
-const removeLevelConfig = (index: number) => {
-  if (localLevelConfig.value.length > 1) {
-    localLevelConfig.value.splice(index, 1)
-  }
-}
-
-onMounted(() => {
-  localConfig.value = { ...gameStore.config }
-  localLevelConfig.value = [...gameStore.levelConfig]
-})
-</script>
 
 <style scoped>
 @reference '@/assets/styles/main.css';
@@ -225,7 +232,7 @@ onMounted(() => {
 
 .setting-input,
 .setting-select {
-  @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+  @apply px-2 py-1.5 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
 }
 
 .toggle-btn {
@@ -241,15 +248,23 @@ onMounted(() => {
 }
 
 .level-item {
-  @apply p-3 border border-gray-200 rounded-md;
+  @apply border border-border rounded-sm;
 }
 
-.level-title {
-  @apply font-medium text-gray-800 block mb-2;
+.level-header {
+  @apply flex-x-4 justify-between p-2 border-b border-border bg-stone-50;
+
+  .level-title {
+    @apply flex-start h-full text-primary text-sm font-semibold;
+  }
+
+  .remove-level-btn {
+    @apply flex-center size-6 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-sm disabled:opacity-50 disabled:cursor-not-allowed;
+  }
 }
 
 .level-controls {
-  @apply flex items-center gap-2 flex-wrap;
+  @apply flex items-center gap-2 p-2 flex-wrap;
 }
 
 .level-controls label {
@@ -264,27 +279,27 @@ onMounted(() => {
   @apply w-4 h-4;
 }
 
-.remove-level-btn {
-  @apply p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
 .add-level-btn {
-  @apply flex items-center gap-2 px-3 py-2 bg-green-100 text-green-700 border border-green-300 rounded-md hover:bg-green-200 transition-colors;
+  @apply flex-x-2 px-3 py-2 bg-emerald-100 text-emerald-600 border border-emerald-200 rounded-md hover:bg-emerald-200 transition-colors;
 }
 
 .settings-footer {
-  @apply flex justify-end gap-2 p-4 border-t border-gray-200;
+  @apply flex-center gap-2 p-4 border-t border-border;
 }
 
 .btn {
-  @apply flex items-center gap-2 px-4 py-2 rounded-md font-medium focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply flex-x-2 px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2;
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500;
 }
 
 .btn-secondary {
-  @apply bg-gray-300 text-gray-700 hover:bg-gray-400 focus:ring-gray-500;
+  @apply bg-stone-100 text-primary hover:bg-stone-200 focus:ring-stone-400;
+}
+
+.btn-outline {
+  @apply bg-card border border-border;
 }
 </style>
